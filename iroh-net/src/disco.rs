@@ -33,6 +33,7 @@ use super::{key::PublicKey, stun};
 // TODO: custom magicn
 /// The 6 byte header of all discovery messages.
 pub const MAGIC: &str = "TS💬"; // 6 bytes: 0x54 53 f0 9f 92 ac
+/// magic len
 pub const MAGIC_LEN: usize = MAGIC.as_bytes().len();
 
 /// Current Version.
@@ -49,11 +50,15 @@ const HEADER_LEN: usize = 2;
 const PING_LEN: usize = TX_LEN + key::PUBLIC_KEY_LENGTH;
 const EP_LENGTH: usize = 16 + 2; // 16 byte IP address + 2 byte port
 
+/// message type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum MessageType {
+    /// ping
     Ping = 0x01,
+    /// pong
     Pong = 0x02,
+    /// call me maybe
     CallMeMaybe = 0x03,
 }
 
@@ -72,6 +77,7 @@ impl TryFrom<u8> for MessageType {
 
 const MESSAGE_HEADER_LEN: usize = MAGIC_LEN + KEY_LEN;
 
+/// encode message
 pub fn encode_message(sender: &PublicKey, seal: Vec<u8>) -> Vec<u8> {
     let mut out = Vec::with_capacity(MESSAGE_HEADER_LEN);
     out.extend_from_slice(MAGIC.as_bytes());
@@ -106,11 +112,15 @@ pub fn source_and_box(p: &[u8]) -> Option<(PublicKey, &[u8])> {
 /// A discovery message.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Message {
+    /// ping
     Ping(Ping),
+    /// pong
     Pong(Pong),
+    /// call me maybe
     CallMeMaybe(CallMeMaybe),
 }
 
+/// Ping
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ping {
     /// Random client-generated per-ping transaction ID.
@@ -127,6 +137,7 @@ pub struct Ping {
 /// It includes the sender's source IP + port, so it's effectively a STUN response.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Pong {
+    /// tx id
     pub tx_id: stun::TransactionId,
     /// 18 bytes (16+2) on the wire; v4-mapped ipv6 for IPv4.
     pub src: SendAddr,
